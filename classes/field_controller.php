@@ -24,13 +24,10 @@
 
 namespace customfield_omniselect;
 
-defined('MOODLE_INTERNAL') || die();
-
 /**
  * Manages field-level configuration for the omniselect custom field type.
  */
 class field_controller extends \core_customfield\field_controller {
-
     /** @var string Plugin type identifier. */
     const TYPE = 'omniselect';
 
@@ -40,13 +37,19 @@ class field_controller extends \core_customfield\field_controller {
      * @param \MoodleQuickForm $mform
      */
     public function config_form_definition(\MoodleQuickForm $mform): void {
-        $mform->addElement('header', 'header_specificsettings',
-            get_string('specificsettings', 'customfield_omniselect'));
+        $mform->addElement(
+            'header',
+            'header_specificsettings',
+            get_string('specificsettings', 'customfield_omniselect')
+        );
         $mform->setExpanded('header_specificsettings', true);
 
-        $mform->addElement('textarea', 'configdata[options]',
+        $mform->addElement(
+            'textarea',
+            'configdata[options]',
             get_string('options', 'customfield_omniselect'),
-            ['rows' => 10, 'cols' => 50]);
+            ['rows' => 10, 'cols' => 50]
+        );
         $mform->setType('configdata[options]', PARAM_TEXT);
         $mform->addHelpButton('configdata[options]', 'options', 'customfield_omniselect');
     }

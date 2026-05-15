@@ -20,7 +20,6 @@
  * @package    customfield_omniselect
  * @copyright  2026 Your Name <you@example.com>
  * @license    https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
- * @covers     \customfield_omniselect\data_controller
  */
 
 namespace customfield_omniselect;
@@ -30,9 +29,10 @@ use core_customfield\data_controller as core_data_controller;
 
 /**
  * Tests for data_controller save, load, delete, and export behaviour.
+ *
+ * @covers \customfield_omniselect\data_controller
  */
-class data_controller_test extends advanced_testcase {
-
+final class data_controller_test extends advanced_testcase {
     /** @var \core_customfield\field_controller */
     private \core_customfield\field_controller $field;
 
@@ -169,10 +169,6 @@ class data_controller_test extends advanced_testcase {
 
         $this->assertSame(0, $count);
     }
-
-    // -------------------------------------------------------------------------
-    // Helpers
-    // -------------------------------------------------------------------------
 
     /**
      * Saves the given values against the test course via instance_form_save().

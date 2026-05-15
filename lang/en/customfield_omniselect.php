@@ -24,9 +24,9 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-$string['pluginname']        = 'Multi-select';
-$string['specificsettings']  = 'Multi-select field settings';
+$string['noselection']       = 'No selection';
 $string['options']           = 'Options';
 $string['options_help']      = 'Enter one option per line. These will be available for multi-selection when editing a course.';
-$string['noselection']       = 'No selection';
+$string['pluginname']        = 'Multi-select';
 $string['privacy:metadata']  = 'The omniselect custom field plugin stores selected values in its own table as part of the custom fields system.';
+$string['specificsettings']  = 'Multi-select field settings';

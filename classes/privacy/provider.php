@@ -29,8 +29,6 @@ use core_customfield\data_controller;
 use core_privacy\local\metadata\null_provider;
 use core_privacy\local\request\writer;
 
-defined('MOODLE_INTERNAL') || die();
-
 /**
  * Privacy provider for the omniselect custom field type.
  *
@@ -38,8 +36,7 @@ defined('MOODLE_INTERNAL') || die();
  * so it holds no personal data. It participates in the customfield export
  * API so course export includes selected field values.
  */
-class provider implements null_provider, customfield_provider {
-
+class provider implements customfield_provider, null_provider {
     /**
      * Returns the language string key explaining that no personal data is stored.
      *

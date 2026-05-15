@@ -24,8 +24,6 @@
 
 namespace customfield_omniselect;
 
-defined('MOODLE_INTERNAL') || die();
-
 /**
  * Handles per-instance data for the omniselect custom field type.
  *
@@ -35,7 +33,6 @@ defined('MOODLE_INTERNAL') || die();
  *      backup and export compatibility.
  */
 class data_controller extends \core_customfield\data_controller {
-
     /**
      * Returns the column in customfield_data used for the display summary.
      *

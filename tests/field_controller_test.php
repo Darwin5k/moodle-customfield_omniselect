@@ -20,7 +20,6 @@
  * @package    customfield_omniselect
  * @copyright  2026 Your Name <you@example.com>
  * @license    https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
- * @covers     \customfield_omniselect\field_controller
  */
 
 namespace customfield_omniselect;
@@ -29,9 +28,10 @@ use advanced_testcase;
 
 /**
  * Tests for field_controller option parsing and configuration validation.
+ *
+ * @covers \customfield_omniselect\field_controller
  */
-class field_controller_test extends advanced_testcase {
-
+final class field_controller_test extends advanced_testcase {
     /**
      * Creates a real omniselect field via the core_customfield generator.
      *
