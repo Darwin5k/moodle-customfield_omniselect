@@ -55,12 +55,15 @@ final class field_controller_test extends advanced_testcase {
 
     /**
      * Options are parsed correctly from a Unix newline-delimited string.
+     *
+     * get_options() returns [optionid => label]; we compare just the labels
+     * (array_values) since the IDs are assigned by the DB sequence.
      */
     public function test_get_options_unix_newlines(): void {
         $this->resetAfterTest();
         $field = $this->create_field("Red\nGreen\nBlue");
 
-        $this->assertSame(['Red', 'Green', 'Blue'], $field->get_options());
+        $this->assertSame(['Red', 'Green', 'Blue'], array_values($field->get_options()));
     }
 
     /**
@@ -70,7 +73,7 @@ final class field_controller_test extends advanced_testcase {
         $this->resetAfterTest();
         $field = $this->create_field("Red\r\nGreen\r\nBlue");
 
-        $this->assertSame(['Red', 'Green', 'Blue'], $field->get_options());
+        $this->assertSame(['Red', 'Green', 'Blue'], array_values($field->get_options()));
     }
 
     /**
@@ -80,7 +83,7 @@ final class field_controller_test extends advanced_testcase {
         $this->resetAfterTest();
         $field = $this->create_field("Red\n\nGreen\n\nBlue\n");
 
-        $this->assertSame(['Red', 'Green', 'Blue'], $field->get_options());
+        $this->assertSame(['Red', 'Green', 'Blue'], array_values($field->get_options()));
     }
 
     /**
@@ -90,7 +93,7 @@ final class field_controller_test extends advanced_testcase {
         $this->resetAfterTest();
         $field = $this->create_field("  Red  \n   \nGreen");
 
-        $this->assertSame(['Red', 'Green'], $field->get_options());
+        $this->assertSame(['Red', 'Green'], array_values($field->get_options()));
     }
 
     /**
@@ -101,6 +104,19 @@ final class field_controller_test extends advanced_testcase {
         $field = $this->create_field('');
 
         $this->assertSame([], $field->get_options());
+    }
+
+    /**
+     * get_options() returns an array keyed by integer option IDs.
+     */
+    public function test_get_options_keys_are_integers(): void {
+        $this->resetAfterTest();
+        $field = $this->create_field("Red\nGreen");
+
+        foreach (array_keys($field->get_options()) as $key) {
+            $this->assertIsInt($key);
+            $this->assertGreaterThan(0, $key);
+        }
     }
 
     /**

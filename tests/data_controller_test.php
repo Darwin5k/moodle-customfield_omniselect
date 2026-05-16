@@ -58,19 +58,22 @@ final class data_controller_test extends advanced_testcase {
 
     /**
      * Saves two values and confirms they appear in the normalized table.
+     *
+     * Vals now store optionid (int), so we join with opts to get the labels.
      */
     public function test_instance_form_save_writes_normalized_rows(): void {
         global $DB;
 
         $this->save_values(['Alabama', 'Alaska']);
 
-        $rows = $DB->get_fieldset_select(
-            'customfield_omniselect_vals',
-            'value',
-            'fieldid = ? AND instanceid = ?',
+        $rows = $DB->get_fieldset_sql(
+            "SELECT oo.value
+               FROM {customfield_omniselect_vals} omv
+               JOIN {customfield_omniselect_opts} oo ON oo.id = omv.optionid
+              WHERE omv.fieldid = ? AND omv.instanceid = ?
+           ORDER BY oo.value ASC",
             [$this->field->get('id'), $this->course->id]
         );
-        sort($rows);
 
         $this->assertSame(['Alabama', 'Alaska'], $rows);
     }
@@ -96,20 +99,27 @@ final class data_controller_test extends advanced_testcase {
 
     /**
      * Values not in the defined option list are silently rejected on save.
+     *
+     * We pass one valid option ID and one clearly invalid ID (-1); only the
+     * valid one should appear in the vals table.
      */
     public function test_instance_form_save_rejects_invalid_values(): void {
         global $DB;
 
-        $this->save_values(['Alabama', 'NOTANOPTION']);
+        $options   = $this->field->get_options();         // [optionid => label]
+        $validid   = array_key_first($options);           // first valid ID (Alabama)
+        $invalidid = -1;                                  // not a real option
 
-        $rows = $DB->get_fieldset_select(
-            'customfield_omniselect_vals',
-            'value',
-            'fieldid = ? AND instanceid = ?',
-            [$this->field->get('id'), $this->course->id]
-        );
+        $dc = $this->make_data_controller();
+        $elementname = $dc->get_form_element_name();
+        $dc->instance_form_save((object)[$elementname => [$validid, $invalidid]]);
 
-        $this->assertSame(['Alabama'], $rows);
+        $count = $DB->count_records('customfield_omniselect_vals', [
+            'fieldid'    => $this->field->get('id'),
+            'instanceid' => $this->course->id,
+        ]);
+
+        $this->assertSame(1, $count);
     }
 
     /**
@@ -171,28 +181,57 @@ final class data_controller_test extends advanced_testcase {
     }
 
     /**
-     * Saves the given values against the test course via instance_form_save().
+     * Saves the given option labels against the test course via instance_form_save().
      *
-     * @param string[] $values
+     * Labels are translated to option IDs before calling save, because
+     * instance_form_save() now expects integer option IDs (as submitted by the
+     * multi-select form element).
+     *
+     * @param string[] $labels Human-readable option labels to select.
      */
-    private function save_values(array $values): void {
+    private function save_values(array $labels): void {
+        $optionids = array_map([$this, 'get_option_id_by_label'], $labels);
+
+        $dc          = $this->make_data_controller();
+        $elementname = $dc->get_form_element_name();
+        $dc->instance_form_save((object)[$elementname => $optionids]);
+    }
+
+    /**
+     * Returns the option ID for the given label string.
+     *
+     * @param string $label
+     * @return int
+     */
+    private function get_option_id_by_label(string $label): int {
+        foreach ($this->field->get_options() as $id => $value) {
+            if ($value === $label) {
+                return $id;
+            }
+        }
+        throw new \coding_exception("Option label '{$label}' not found in field options.");
+    }
+
+    /**
+     * Returns a data_controller for the test course, re-using any existing
+     * customfield_data record so repeated saves do UPDATE rather than INSERT.
+     *
+     * @return data_controller
+     */
+    private function make_data_controller(): data_controller {
         global $DB;
 
-        // Re-use any existing customfield_data record so the second save does UPDATE not INSERT.
         $existing = $DB->get_record('customfield_data', [
             'fieldid'    => $this->field->get('id'),
             'instanceid' => $this->course->id,
         ]);
-        // Pass 0 for ID; the record object carries its own id for UPDATE paths.
+
         $dc = core_data_controller::create(0, $existing ?: null, $this->field);
         if (!$existing) {
             $dc->set('instanceid', $this->course->id);
             $dc->set('contextid', \context_course::instance($this->course->id)->id);
         }
-
-        $elementname            = $dc->get_form_element_name();
-        $datanew                = (object)[$elementname => $values];
-        $dc->instance_form_save($datanew);
+        return $dc;
     }
 
     /**
@@ -208,7 +247,6 @@ final class data_controller_test extends advanced_testcase {
             'instanceid' => $this->course->id,
         ]);
 
-        // Pass 0 for ID; the record object carries its own id for UPDATE paths.
         $dc = core_data_controller::create(0, $record ?: null, $this->field);
         if (!$record) {
             $dc->set('instanceid', $this->course->id);
