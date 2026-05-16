@@ -38,8 +38,8 @@ function xmldb_customfield_omniselect_uninstall(): bool {
         [$insql, $params] = $DB->get_in_or_equal($fieldids, SQL_PARAMS_NAMED);
         $DB->delete_records_select('customfield_omniselect_vals', "fieldid {$insql}", $params);
         $DB->delete_records_select('customfield_omniselect_opts', "fieldid {$insql}", $params);
-        $DB->delete_records_select('customfield_data',            "fieldid {$insql}", $params);
-        $DB->delete_records_select('customfield_field',           "id {$insql}",      $params);
+        $DB->delete_records_select('customfield_data', "fieldid {$insql}", $params);
+        $DB->delete_records_select('customfield_field', "id {$insql}", $params);
     }
 
     return true;

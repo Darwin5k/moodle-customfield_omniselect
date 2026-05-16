@@ -38,7 +38,6 @@ namespace customfield_omniselect;
  * @license    https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class data_controller extends \core_customfield\data_controller {
-
     /**
      * Returns the column in customfield_data used for the display summary.
      *
@@ -67,7 +66,7 @@ class data_controller extends \core_customfield\data_controller {
      */
     public function instance_form_definition(\MoodleQuickForm $mform): void {
         $field   = $this->get_field();
-        $options = $field->get_options(); // [optionid => label]
+        $options = $field->get_options(); // Returns an array keyed by option ID.
 
         $elementname = $this->get_form_element_name();
         $mform->addElement(

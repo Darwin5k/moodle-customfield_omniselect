@@ -44,35 +44,31 @@ function xmldb_customfield_omniselect_upgrade(int $oldversion): bool {
     }
 
     if ($oldversion < 2026051402) {
-        // -----------------------------------------------------------------------
         // Step 1: Create the customfield_omniselect_opts table.
         //
         // Options were previously stored as a newline-delimited string in
         // customfield_field.configdata. Moving them to a dedicated table gives
         // each option a stable integer ID, so renaming an option no longer
         // orphans existing selection data.
-        // -----------------------------------------------------------------------
         $optstable = new xmldb_table('customfield_omniselect_opts');
-        $optstable->add_field('id',        XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, XMLDB_SEQUENCE, null);
-        $optstable->add_field('fieldid',   XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null);
-        $optstable->add_field('value',     XMLDB_TYPE_CHAR,   '255', null, XMLDB_NOTNULL, null, null);
+        $optstable->add_field('id', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, XMLDB_SEQUENCE, null);
+        $optstable->add_field('fieldid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null);
+        $optstable->add_field('value', XMLDB_TYPE_CHAR, '255', null, XMLDB_NOTNULL, null, null);
         $optstable->add_field('sortorder', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
         $optstable->add_key('primary', XMLDB_KEY_PRIMARY, ['id']);
         $optstable->add_key('fieldid', XMLDB_KEY_FOREIGN, ['fieldid'], 'customfield_field', ['id']);
         $optstable->add_index('fieldid_sortorder', XMLDB_INDEX_NOTUNIQUE, ['fieldid', 'sortorder']);
-        $optstable->add_index('fieldid_value',     XMLDB_INDEX_UNIQUE,    ['fieldid', 'value']);
+        $optstable->add_index('fieldid_value', XMLDB_INDEX_UNIQUE, ['fieldid', 'value']);
 
         if (!$dbman->table_exists($optstable)) {
             $dbman->create_table($optstable);
         }
 
-        // -----------------------------------------------------------------------
         // Step 2: Seed the opts table from each field's configdata.
         //
-        // Build a map of fieldid => [option_string => new_option_id] for use in
+        // Build a map of fieldid => option_string => new_option_id for use in
         // the vals migration below.
-        // -----------------------------------------------------------------------
-        $optionmap = []; // [fieldid][value] => optionid
+        $optionmap = []; // Keyed by fieldid and option label; values are option IDs.
         $fields    = $DB->get_records('customfield_field', ['type' => 'omniselect']);
 
         foreach ($fields as $field) {
@@ -99,21 +95,17 @@ function xmldb_customfield_omniselect_upgrade(int $oldversion): bool {
             }
         }
 
-        // -----------------------------------------------------------------------
         // Step 3: Add the optionid column to customfield_omniselect_vals.
-        // -----------------------------------------------------------------------
         $valstable = new xmldb_table('customfield_omniselect_vals');
         $optidfield = new xmldb_field('optionid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
         if (!$dbman->field_exists($valstable, $optidfield)) {
             $dbman->add_field($valstable, $optidfield);
         }
 
-        // -----------------------------------------------------------------------
         // Step 4: Populate optionid from the old value string.
         //
         // Any val whose string no longer matches a known option is left with
         // optionid = 0 (treated as an empty selection and harmless to leave).
-        // -----------------------------------------------------------------------
         $vals = $DB->get_records('customfield_omniselect_vals', null, '', 'id, fieldid, value');
         foreach ($vals as $val) {
             $optid = $optionmap[$val->fieldid][$val->value] ?? 0;
@@ -122,10 +114,8 @@ function xmldb_customfield_omniselect_upgrade(int $oldversion): bool {
             }
         }
 
-        // -----------------------------------------------------------------------
         // Step 5: Remove the old value-based index, drop the value column, and
         // add the new optionid index.
-        // -----------------------------------------------------------------------
         $valueidx = new xmldb_index('fieldid_value', XMLDB_INDEX_NOTUNIQUE, ['fieldid', 'value']);
         if ($dbman->index_exists($valstable, $valueidx)) {
             $dbman->drop_index($valstable, $valueidx);

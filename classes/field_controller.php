@@ -36,7 +36,6 @@ namespace customfield_omniselect;
  * @license    https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class field_controller extends \core_customfield\field_controller {
-
     /** @var string Plugin type identifier. */
     const TYPE = 'omniselect';
 
@@ -141,8 +140,12 @@ class field_controller extends \core_customfield\field_controller {
         // Add new options; update sortorder for retained ones.
         foreach ($newvalues as $sortorder => $value) {
             if (isset($existingbyvalue[$value])) {
-                $DB->set_field('customfield_omniselect_opts', 'sortorder', $sortorder,
-                    ['id' => $existingbyvalue[$value]]);
+                $DB->set_field(
+                    'customfield_omniselect_opts',
+                    'sortorder',
+                    $sortorder,
+                    ['id' => $existingbyvalue[$value]]
+                );
             } else {
                 $DB->insert_record('customfield_omniselect_opts', (object)[
                     'fieldid'   => $fieldid,

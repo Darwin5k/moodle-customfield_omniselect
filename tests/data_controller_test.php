@@ -106,9 +106,9 @@ final class data_controller_test extends advanced_testcase {
     public function test_instance_form_save_rejects_invalid_values(): void {
         global $DB;
 
-        $options   = $this->field->get_options();         // [optionid => label]
-        $validid   = array_key_first($options);           // first valid ID (Alabama)
-        $invalidid = -1;                                  // not a real option
+        $options   = $this->field->get_options();         // Keyed by option ID.
+        $validid   = array_key_first($options);           // First valid ID (Alabama).
+        $invalidid = -1;                                  // Not a real option.
 
         $dc = $this->make_data_controller();
         $elementname = $dc->get_form_element_name();
