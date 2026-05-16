@@ -1,15 +1,31 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<XMLDB PATH="customfield/field/omniselect/db" VERSION="20260514"
+<XMLDB PATH="customfield/field/omniselect/db" VERSION="20260515"
     COMMENT="XMLDB file for Moodle customfield_omniselect"
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     xsi:noNamespaceSchemaLocation="../../../../lib/xmldb/xmldb.xsd">
   <TABLES>
-    <TABLE NAME="customfield_omniselect_vals" COMMENT="One row per selected value per course for omniselect custom fields">
+    <TABLE NAME="customfield_omniselect_opts" COMMENT="Option definitions for omniselect custom fields. One row per selectable option per field.">
       <FIELDS>
-        <FIELD NAME="id"         TYPE="int"  LENGTH="10"  NOTNULL="true" SEQUENCE="true"/>
-        <FIELD NAME="fieldid"    TYPE="int"  LENGTH="10"  NOTNULL="true" COMMENT="FK to customfield_field.id"/>
-        <FIELD NAME="instanceid" TYPE="int"  LENGTH="10"  NOTNULL="true" COMMENT="Course ID"/>
-        <FIELD NAME="value"      TYPE="char" LENGTH="255" NOTNULL="true" COMMENT="Selected option value"/>
+        <FIELD NAME="id"        TYPE="int"  LENGTH="10"  NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="fieldid"   TYPE="int"  LENGTH="10"  NOTNULL="true" COMMENT="FK to customfield_field.id"/>
+        <FIELD NAME="value"     TYPE="char" LENGTH="255" NOTNULL="true" COMMENT="Display label for this option"/>
+        <FIELD NAME="sortorder" TYPE="int"  LENGTH="10"  NOTNULL="true" DEFAULT="0" COMMENT="Display order within this field"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+        <KEY NAME="fieldid" TYPE="foreign" FIELDS="fieldid" REFTABLE="customfield_field" REFFIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="fieldid_sortorder"  UNIQUE="false" FIELDS="fieldid, sortorder"/>
+        <INDEX NAME="fieldid_value"      UNIQUE="true"  FIELDS="fieldid, value"/>
+      </INDEXES>
+    </TABLE>
+    <TABLE NAME="customfield_omniselect_vals" COMMENT="One row per selected option per course for omniselect custom fields">
+      <FIELDS>
+        <FIELD NAME="id"         TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="fieldid"    TYPE="int" LENGTH="10" NOTNULL="true" COMMENT="FK to customfield_field.id"/>
+        <FIELD NAME="instanceid" TYPE="int" LENGTH="10" NOTNULL="true" COMMENT="Course ID"/>
+        <FIELD NAME="optionid"   TYPE="int" LENGTH="10" NOTNULL="true" COMMENT="FK to customfield_omniselect_opts.id"/>
       </FIELDS>
       <KEYS>
         <KEY NAME="primary"  TYPE="primary" FIELDS="id"/>
@@ -17,7 +33,7 @@
       </KEYS>
       <INDEXES>
         <INDEX NAME="fieldid_instanceid" UNIQUE="false" FIELDS="fieldid, instanceid"/>
-        <INDEX NAME="fieldid_value"      UNIQUE="false" FIELDS="fieldid, value"/>
+        <INDEX NAME="fieldid_optionid"   UNIQUE="false" FIELDS="fieldid, optionid"/>
         <INDEX NAME="instanceid"         UNIQUE="false" FIELDS="instanceid"/>
       </INDEXES>
     </TABLE>

@@ -28,11 +28,17 @@ namespace customfield_omniselect;
  * Handles per-instance data for the omniselect custom field type.
  *
  * Selected values are stored in two places:
- *   1. `customfield_omniselect_vals` — one row per value, for fast indexed queries.
- *   2. `customfield_data.value` (TEXT) — comma-separated display string for Moodle
- *      backup and export compatibility.
+ *   1. customfield_omniselect_vals — one row per selected option ID, for fast
+ *      indexed filtering and retrieval.
+ *   2. customfield_data.value (TEXT) — a comma-separated display string written
+ *      for Moodle backup and export compatibility.
+ *
+ * @package    customfield_omniselect
+ * @copyright  2026 Your Name <you@example.com>
+ * @license    https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class data_controller extends \core_customfield\data_controller {
+
     /**
      * Returns the column in customfield_data used for the display summary.
      *
@@ -43,7 +49,7 @@ class data_controller extends \core_customfield\data_controller {
     }
 
     /**
-     * Returns the default value (empty selection).
+     * Returns the default value (empty multi-selection).
      *
      * @return array
      */
@@ -54,21 +60,24 @@ class data_controller extends \core_customfield\data_controller {
     /**
      * Adds a multi-select element to the course editing form.
      *
+     * The select element's option values are option IDs (integers), so submitted
+     * data is a clean array of integers ready for validation.
+     *
      * @param \MoodleQuickForm $mform
      */
     public function instance_form_definition(\MoodleQuickForm $mform): void {
         $field   = $this->get_field();
-        $options = $field->get_options();
+        $options = $field->get_options(); // [optionid => label]
 
         $elementname = $this->get_form_element_name();
         $mform->addElement(
             'select',
             $elementname,
             $field->get_formatted_name(),
-            array_combine($options, $options),
+            $options,
             ['multiple' => 'multiple', 'size' => min(8, max(3, count($options)))]
         );
-        $mform->setType($elementname, PARAM_TEXT);
+        $mform->setType($elementname, PARAM_INT);
 
         if ($field->get_configdata_property('required')) {
             $mform->addRule($elementname, null, 'required', null, 'client');
@@ -76,31 +85,36 @@ class data_controller extends \core_customfield\data_controller {
     }
 
     /**
-     * Populates the form element from the normalized values table before the form renders.
+     * Populates the form element from the normalized vals table before the form renders.
      *
      * @param \stdClass $instance
      */
     public function instance_form_before_set_data(\stdClass $instance): void {
         global $DB;
 
+        $elementname = $this->get_form_element_name();
         if (!$this->get('id')) {
-            $instance->{$this->get_form_element_name()} = [];
+            $instance->{$elementname} = [];
             return;
         }
 
-        $values = $DB->get_fieldset_select(
+        $rows = $DB->get_records(
             'customfield_omniselect_vals',
-            'value',
-            'fieldid = ? AND instanceid = ?',
-            [$this->get_field()->get('id'), $this->get('instanceid')]
+            ['fieldid' => $this->get_field()->get('id'), 'instanceid' => $this->get('instanceid')],
+            '',
+            'id, optionid'
         );
 
-        $instance->{$this->get_form_element_name()} = $values;
+        $optionids = [];
+        foreach ($rows as $row) {
+            $optionids[] = (int)$row->optionid;
+        }
+        $instance->{$elementname} = $optionids;
     }
 
     /**
-     * Saves selected values to the normalized table and writes a display summary to
-     * customfield_data for backup/export compatibility.
+     * Saves selected option IDs to the normalized table and writes a display
+     * summary to customfield_data for backup and export compatibility.
      *
      * @param \stdClass $datanew
      */
@@ -114,29 +128,31 @@ class data_controller extends \core_customfield\data_controller {
 
         $fieldid    = $this->get_field()->get('id');
         $instanceid = $this->get('instanceid');
-        $submitted  = (array)($datanew->{$elementname} ?? []);
+        $submitted  = array_map('intval', (array)($datanew->{$elementname} ?? []));
 
-        // Reject any values not in the defined option list.
-        $valid  = $this->get_field()->get_options();
-        $values = array_values(array_filter($submitted, fn($v) => in_array($v, $valid, true)));
+        // Keep only IDs that exist in the current option set.
+        $validids  = array_keys($this->get_field()->get_options());
+        $optionids = array_values(array_filter($submitted, fn($id) => in_array($id, $validids, true)));
 
         // Overwrite normalized rows.
         $DB->delete_records('customfield_omniselect_vals', ['fieldid' => $fieldid, 'instanceid' => $instanceid]);
-        foreach ($values as $value) {
+        foreach ($optionids as $optionid) {
             $DB->insert_record('customfield_omniselect_vals', (object)[
                 'fieldid'    => $fieldid,
                 'instanceid' => $instanceid,
-                'value'      => $value,
+                'optionid'   => $optionid,
             ]);
         }
 
-        // Write display summary to customfield_data for backup/export compatibility.
-        $datanew->{$elementname} = implode(', ', $values);
+        // Write display summary to customfield_data for backup/export.
+        $alloptions = $this->get_field()->get_options();
+        $labels     = array_map(fn($id) => $alloptions[$id] ?? '', $optionids);
+        $datanew->{$elementname} = implode(', ', array_filter($labels));
         parent::instance_form_save($datanew);
     }
 
     /**
-     * Deletes all normalized rows for this instance and removes the parent record.
+     * Deletes all normalized rows for this instance before the parent record is removed.
      *
      * @return bool
      */
@@ -150,7 +166,10 @@ class data_controller extends \core_customfield\data_controller {
     }
 
     /**
-     * Returns a comma-separated string of selected values for export, or null if empty.
+     * Returns a comma-separated string of selected option labels for export, or null if empty.
+     *
+     * Reads labels from the opts table via get_options(), so exported text always
+     * reflects the current option label even if it was renamed after saving.
      *
      * @return string|null
      */
@@ -161,13 +180,25 @@ class data_controller extends \core_customfield\data_controller {
             return null;
         }
 
-        $values = $DB->get_fieldset_select(
+        $rows = $DB->get_records(
             'customfield_omniselect_vals',
-            'value',
-            'fieldid = ? AND instanceid = ?',
-            [$this->get_field()->get('id'), $this->get('instanceid')]
+            ['fieldid' => $this->get_field()->get('id'), 'instanceid' => $this->get('instanceid')],
+            '',
+            'id, optionid'
         );
 
-        return empty($values) ? null : implode(', ', $values);
+        if (empty($rows)) {
+            return null;
+        }
+
+        $alloptions = $this->get_field()->get_options();
+        $labels     = [];
+        foreach ($rows as $row) {
+            if (isset($alloptions[$row->optionid])) {
+                $labels[] = $alloptions[$row->optionid];
+            }
+        }
+
+        return empty($labels) ? null : implode(', ', $labels);
     }
 }

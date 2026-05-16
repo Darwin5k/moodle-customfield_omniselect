@@ -15,10 +15,7 @@
 // along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
 
 /**
- * Uninstall script for customfield_omniselect.
- *
- * Removes all field definitions and their associated values so that
- * uninstalling the plugin leaves the database in a clean state.
+ * Uninstall steps for customfield_omniselect.
  *
  * @package    customfield_omniselect
  * @copyright  2026 Your Name <you@example.com>
@@ -26,24 +23,23 @@
  */
 
 /**
- * Cleans up omniselect field data on plugin uninstall.
+ * Removes all data created by this plugin from the database.
+ *
+ * Moodle drops the plugin's own tables automatically after this function runs,
+ * so we only need to clean up rows in core tables here.
  *
  * @return bool
  */
 function xmldb_customfield_omniselect_uninstall(): bool {
     global $DB;
 
-    // Collect all omniselect field IDs.
     $fieldids = $DB->get_fieldset_select('customfield_field', 'id', "type = 'omniselect'");
-
     if (!empty($fieldids)) {
-        // Remove all selected values for those fields.
-        [$insql, $params] = $DB->get_in_or_equal($fieldids);
+        [$insql, $params] = $DB->get_in_or_equal($fieldids, SQL_PARAMS_NAMED);
         $DB->delete_records_select('customfield_omniselect_vals', "fieldid {$insql}", $params);
-
-        // Remove customfield_data rows and the field definitions themselves.
-        $DB->delete_records_select('customfield_data', "fieldid {$insql}", $params);
-        $DB->delete_records_select('customfield_field', "id {$insql}", $params);
+        $DB->delete_records_select('customfield_omniselect_opts', "fieldid {$insql}", $params);
+        $DB->delete_records_select('customfield_data',            "fieldid {$insql}", $params);
+        $DB->delete_records_select('customfield_field',           "id {$insql}",      $params);
     }
 
     return true;

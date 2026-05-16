@@ -25,7 +25,7 @@
 defined('MOODLE_INTERNAL') || die();
 
 $plugin->component = 'customfield_omniselect';
-$plugin->version   = 2026051401;
+$plugin->version   = 2026051402;
 $plugin->requires  = 2025092600;
 $plugin->maturity  = MATURITY_ALPHA;
-$plugin->release   = '1.0.1';
+$plugin->release   = '1.0.2';
