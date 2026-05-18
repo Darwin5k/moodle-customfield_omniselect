@@ -1,7 +1,16 @@
 # customfield_omniselect
 
 A Moodle custom field type that allows multiple values to be selected from a
-predefined list. Designed to power faceted filtering in course catalogues.
+predefined list. Built specifically as the data layer for the
+[OmniCatalogue](https://github.com/Darwin5k/moodle-local_omnicatalogue) course
+catalogue plugin (`local_omnicatalogue`), which uses these fields to drive its
+faceted filter sidebar.
+
+> **Note:** Omni-select fields store their values in a dedicated normalised table
+> rather than Moodle's standard `customfield_data` column. This means other
+> catalogue or reporting plugins that only read `customfield_data` will not see
+> the multi-value data correctly. If you need multi-select filtering, use this
+> plugin together with `local_omnicatalogue`.
 
 ## Features
 
@@ -29,6 +38,10 @@ predefined list. Designed to power faceted filtering in course catalogues.
 2. Click **Add a new custom field** and choose **Omni-select**.
 3. Enter a name and one option per line under **Options**.
 4. Open any course edit page — the field appears in the **Custom fields** section.
+
+To use these fields for faceted filtering, install
+[local_omnicatalogue](https://github.com/Darwin5k/moodle-local_omnicatalogue)
+and configure which fields appear in the catalogue sidebar.
 
 ## Compatibility
 
