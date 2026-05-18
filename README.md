@@ -26,7 +26,7 @@ predefined list. Designed to power faceted filtering in course catalogues.
 ## Usage
 
 1. Go to **Site administration → Courses → Course custom fields**.
-2. Click **Add a new custom field** and choose **Multi-select**.
+2. Click **Add a new custom field** and choose **Omni-select**.
 3. Enter a name and one option per line under **Options**.
 4. Open any course edit page — the field appears in the **Custom fields** section.
 
