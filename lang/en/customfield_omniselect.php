@@ -18,13 +18,12 @@
  * Language strings for customfield_omniselect.
  *
  * @package    customfield_omniselect
- * @copyright  2026 Your Name <you@example.com>
+ * @copyright  2026 Robert Bellamy <darwin5k@gmail.com>
  * @license    https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
 defined('MOODLE_INTERNAL') || die();
 
-$string['noselection']       = 'No selection';
 $string['options']           = 'Options';
 $string['options_help']      = 'Enter one option per line. These will be available for selection when editing a course.';
 $string['pluginname']        = 'Omni-select';

@@ -18,7 +18,7 @@
  * Field controller for the omniselect custom field type.
  *
  * @package    customfield_omniselect
- * @copyright  2026 Your Name <you@example.com>
+ * @copyright  2026 Robert Bellamy <darwin5k@gmail.com>
  * @license    https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
@@ -32,7 +32,7 @@ namespace customfield_omniselect;
  * save() syncs the opts table from the textarea text.
  *
  * @package    customfield_omniselect
- * @copyright  2026 Your Name <you@example.com>
+ * @copyright  2026 Robert Bellamy <darwin5k@gmail.com>
  * @license    https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class field_controller extends \core_customfield\field_controller {
